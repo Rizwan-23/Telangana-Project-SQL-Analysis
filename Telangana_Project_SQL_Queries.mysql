@@ -1,0 +1,427 @@
++---------------------------------------------------------------------------------------------------------------------------+
+		   # 𝐏𝐫𝐞𝐥𝐢𝐦𝐢𝐧𝐚𝐫𝐲 𝐑𝐞𝐬𝐞𝐚𝐫𝐜𝐡 𝐐𝐮𝐞𝐬𝐭𝐢𝐨𝐧𝐬: 𝐀𝐧𝐬𝐰𝐞𝐫 𝐜𝐚𝐧 𝐛𝐞 𝐟𝐨𝐮𝐧𝐝 𝐝𝐢𝐫𝐞𝐜𝐭𝐥𝐲 𝐟𝐫𝐨𝐦 𝐭𝐡𝐞 𝐠𝐢𝐯𝐞𝐧 𝐝𝐚𝐭𝐚
++---------------------------------------------------------------------------------------------------------------------------+
+
+***********************************************[ Question-1 ]****************************************************************
+
+/* [Question-1]: List down the Top 10 districts that have the highest number of domestic 
+		 visitors overall (2016-2019)?
+		 (Insight: Get an overview of districts that are doing well)                                              */
+
++---------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-1]: Top 10 Districts (Domestic)
+
+select  district, 
+	sum(visitors) as overall_visitors
+from telangana_project.modify_domestic_visitors
+group by district
+order by overall_visitors desc limit 10;
+
++----------------------------------------------------------------------------------------------------------------------------+
+-- [Query-2]: Top 10 Districts (Foreign)
+
+select  district, 
+	sum(visitors) as overall_visitors
+from telangana_project.modify_foreign_visitors
+group by district
+order by overall_visitors desc limit 10;
+
+
+************************************************[ Question-2 ]***************************************************************
+
+/* [Question-2]: List down the top 3 districts based on compound annual growth rate (CAGR)
+		 of visitors between (2016-2019)?
+		 (Insight: Districts that are growing)	
+
+	         CAGR stands for Compound Annual Growth Rate. It is a measure used to calculate
+                 the annualized growth rate of an investment over a specific period of time.
+	      
+                 CAGR = [(Ending Value / Beginning Value) ^ (1 / Number of Years) - 1]
+	         Here, CAGR from 2016-2019 (Number of Years = 3 years)                                                                               */
+
++---------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-1]: For Domestic
+	      
+with cte as (
+select  district,
+	sum(case when year=2016 then visitors else 0 end) as Initial_Value,
+        sum(case when year=2019 then visitors else 0 end) as Final_Value
+from telangana_project.modify_domestic_visitors
+group by district
+)
+select *, round((power(Final_Value/Initial_Value,1/3)-1)*100,2) as CAGR
+from cte 
+order by CAGR desc limit 5;
+
++----------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-2]: For Foreign
+
+with cte as (
+select  district,
+	sum(case when year=2016 then visitors else 0 end) as Initial_Value,
+        sum(case when year=2019 then visitors else 0 end) as Final_Value
+from telangana_project.modify_foreign_visitors
+group by district
+)
+select *, round((power(Final_Value/Initial_Value,1/3)-1)*100,2) as CAGR
+from cte 
+order by CAGR desc limit 5;
+
+
+********************************************[ Question-3 ]*********************************************************************
+
+/* [Question-3]:List down the bottom 3 districts based on compounded annual growth rate(CAGR)
+	        of visitors between (2016-2019)?
+	       (Insights: Districts that are declining)                                                                      */
+
++------------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-1] For Domestic
+
+with cte as (
+select  district,
+	sum(case when year=2016 then visitors else 0 end) as Initial_Value,
+        sum(case when year=2019 then visitors else 0 end) as Final_Value
+from telangana_project.modify_domestic_visitors
+group by district
+)
+select *, round((power(Final_Value/Initial_Value,1/3)-1)*100,2) as CAGR
+from cte 
+-- order by CAGR asc limit 3;                                 # output vary here because of Initial_Value has some zero values
+where Initial_Value != 0                                      # or you can say that 'where CAGR is not null' by creating new cte
+order by CAGR asc limit 3;
+
++-------------------------------------------------------------------------------------------------------------------------------+
+
+--[Query-2] For Foreign
+
+with cte as (
+select  district,
+	sum(case when year=2016 then visitors else 0 end) as Initial_Value,
+        sum(case when year=2019 then visitors else 0 end) as Final_Value
+from telangana_project.modify_foreign_visitors
+group by district
+)
+select *, round((power(Final_Value/Initial_Value,1/3)-1)*100,2) as CAGR
+from cte 
+-- order by CAGR asc limit 3;                                 # output vary here because of Initial_Value has some zero values
+where Initial_Value != 0                                      # or you can say that 'where CAGR is not null' by creating new cte
+order by CAGR asc limit 3;
+
+
+*******************************************[ Question-4 ]**********************************************************************
+
+/* [Question-4]:What are the peak and low season months for Hyderabad based on the data from 2016 
+		to 2019 for Hyderabad district?
+		(Insight: Government can plan well for the peak seasons and boost low seasons
+			  by introducing new events)                                                                        */
+
++----------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-1] For Domestic (Top-3 peak_month) 
+	
+select  month as peak_month, 
+	sum(visitors) as visitors
+from telangana_project.modify_domestic_visitors
+where district="hyderabad"
+group by month
+order by visitors desc limit 3;
+
++-------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-2] For Domestic (bottom-3 low_month ) 
+
+select  month as low_month, 
+	sum(visitors) as visitors
+from telangana_project.modify_domestic_visitors
+where district="hyderabad"
+group by month
+order by visitors asc limit 3;
+
++-------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-3] For Foreign (Top-3 peak_month)
+
+select  month as peak_month, 
+	sum(visitors) as visitors
+from telangana_project.modify_Foreign_visitors
+where district="hyderabad"
+group by month
+order by visitors desc limit 3;
+
++-------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-4] For foreign (bottom-3 low_month ) 
+
+select month as low_month, 
+       sum(visitors) as visitors
+from telangana_project.modify_foreign_visitors
+where district="hyderabad"
+group by month
+order by visitors asc limit 3;
+
+
+***********************************************[ Question-5 ]**************************************************************
+
+/* [Question-5]:Show the top & bottom 3 districts with high domestic to foreign tourist ratio?
+                (Insight: Government can learn from top districts and replicate the same to 
+		          bottom districts which can improve the foreign visitors will bring more revenue)                */
+
++--------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query]
+
+with cte as (
+select  d.district, 
+	sum(d.visitors) as d_visitors, 
+	sum(f.visitors) as f_visitors
+from telangana_project.modify_domestic_visitors d
+join telangana_project.modify_foreign_visitors f 
+-- on d.district=f.district                                                    #this gives 71568 rows which is inaccurate 
+-- on d.district=f.district and d.year=f.year                                  #this gives 18000 rows which is inaccurate
+on d.district=f.district and d.year=f.year and d.month=f.month                 #this gives 1500 rows which is accurate
+group by district
+),
+cte2 as (
+select *, round(d_visitors/f_visitors,0) as ratio
+from cte 
+where f_visitors != 0                                                        # with zero, result is infinity and ratio is null
+order by ratio 
+),
+cte3 as (
+select *, rank() over(order by ratio) as top,                                
+          rank() over(order by ratio desc) as bottom
+from cte2
+)
+select district, d_visitors, f_visitors, ratio, top
+from cte3
+where top<4 or bottom<4  
+
+
++--------------------------------------------------------------------------------------------------------------------------+
+		     # 𝐒𝐞𝐜𝐨𝐧𝐝𝐚𝐫𝐲 𝐑𝐞𝐬𝐞𝐚𝐫𝐜𝐡 𝐐𝐮𝐞𝐬𝐭𝐢𝐨𝐧𝐬: (𝐍𝐞𝐞𝐝 𝐭𝐨 𝐝𝐨 𝐫𝐞𝐬𝐞𝐚𝐫𝐜𝐡 𝐚𝐧𝐝 𝐠𝐞𝐭 𝐚𝐝𝐝𝐢𝐭𝐢𝐨𝐧𝐚𝐥 𝐝𝐚𝐭𝐚)
++--------------------------------------------------------------------------------------------------------------------------+
+
+
+******************************************[ Question-6 ]********************************************************************
+
+/* [Question-6]: List the top and bottom 5 districts based on 'population to tourist footfall ratio'* 
+		 ratio in 2019?(*ratio: Total Visitors/Total Residents Population in the given year)
+
+ @ RESEARCH:-
+
+ # Additional data is taken from wikipedia: https://en.wikipedia.org/wiki/List_of_districts_of_Telangana
+
+ # Now, to obtain 2019 and 2025 residents data I simply found CAGR with the current year i.e, 2023
+
+ # Population data 2023 which is '38090000' is taken from this link:https://www.findeasy.in/population-of-telangana/ 
+ 
+ # Population_2011(IV) = 34998289, Population_2023(FV) = 38090000, Growth => FV-IV = 38090000-34998289 = 3091711
+   
+   Growth Rate=> (Growth/IV)*100 = (3091711/34998289)*100 = 9% 
+
+   Yearly Growth Rate => (0.09/11)*100 = 0.8%  [ time interval between 2023 and 2011 = 11 years ]
+
+   Yearly Growth => Population_2011 * Yearly Growth Rate  = 34998289*0.008 = 279986
+
+   Let's assume it is growing by 0.8% 
+
+   Population (given_year) => Population_2011 + (yearly growth)* (no. of years gap)
+
+   So, Population_2019 => Population_2011 + (Population_2011 * 0.008) * 8 = 37238179
+
+   Similarly, Population_2025 => Population_2011 + (Population_2011 * 0.008) * 14 = 38918093 
+
+   Using these calculations, a table is prepared district wise, table_name: [population_year_wise.csv]                 */
+
++------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-1]: Output
+
+with cte as (
+select D.district, sum(D.visitors) as d_visitors,
+		   sum(F.visitors) as f_visitors,
+		   sum(D.visitors)+sum(F.visitors) as t_visitors
+from telangana_project.modify_domestic_visitors D
+join telangana_project.modify_foreign_visitors F
+on F.district=D.district and F.month=D.month and F.year=D.year                                    #pay attention to this
+where D.year=2019
+group by district
+),
+cte1 as (
+select C.*, population_2019 as t_residents, 
+	    round(t_visitors/population_2019,2) as footfall_ratio
+from cte C
+join population_year_wise Y
+on Y.district=C.district
+where t_visitors != 0
+)
+select district, footfall_ratio, top
+from ( select *, row_number() over(order by footfall_ratio desc) as top,
+		 row_number() over(order by footfall_ratio asc) as bottom
+	from cte1) as subquery
+where top<6 or bottom<6
+order by footfall_ratio desc;
+
++---------------------------------------------------------------------------------------------------------------------------+
+
+## Some Additional Queies for this question
+
+-- [Query-2]: For Domestic
+
+with cte as (
+select 	P.district, 
+	year, 
+	sum(D.visitors) as t_visitors , 
+	population_2019 as t_population
+from population_year_wise P
+join modify_domestic_visitors D
+on P.district=D.district
+where year=2019
+group by P.district, population_2019, year  
+),
+cte2 as (
+select *, t_visitors/t_population as footfall_ratio,
+	  row_number() over(order by t_visitors/t_population desc) as top,
+	  row_number() over(order by t_visitors/t_population asc ) as bottom
+from cte
+where t_visitors !=0 )
+select district, footfall_ratio, top
+from cte2
+where top<6 or bottom<6
+order by footfall_ratio desc;
+
++-------------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-3]: For Foreign
+
+with cte as (
+select  P.district, year, 
+	sum(F.visitors) as t_visitors ,
+        population_2019 as t_population
+from population_year_wise P
+join modify_foreign_visitors F
+on P.district=F.district
+where year=2019
+group by P.district, population_2019, year                       # pay attention to this, how many column you're going to group by 
+),
+cte2 as (
+select *,  t_visitors/t_population as footfall_ratio,
+	   row_number() over(order by t_visitors/t_population desc) as top,
+	   row_number() over(order by t_visitors/t_population asc ) as bottom
+from cte
+where t_visitors !=0 )
+select district, footfall_ratio, top
+from cte2
+where top<6 or bottom<6
+order by footfall_ratio desc;
+
+
+*********************************************[ Question:7 ]************************************************************************
+
+/* [Question:7] What will be the projected number of domestic and foreign tourists in Hyderabad in 2025 based on the 
+		Growth rate from previous years?
+	      (Insights: Better estimate of incoming tourists count so that government can plan the infrastructure better)
+
+ # Procedure for finding projected value:
+
+	step:1- first find AGR = [(FV/IV)^(1/n)-1]      {here FV=13802362, IV=23394705, n= 2019-2016}
+			   AGR => [(13802362/23394705)^(1/3)-1] = -0.1612
+
+	step:2- projected value => [current population*(1+(AGR/100))^n]
+				= [13802362*(1+(-0.1612))^6]=4848743			{n=> 2019 to 2025}                       */
+
+
++-----------------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query:-1] Domestic Projected Value for 2025
+
+with cte as (
+select district, sum(case when year=2016 then visitors else 0 end) as Initial_Value,
+		 sum(case when year=2019 then visitors else 0 end) as Final_Value
+from telangana_project.modify_domestic_visitors
+where district="hyderabad" 
+)
+select *, round(Final_Value*power((1+AGR),6),0) as projected_dom_2025
+from (
+	select *, round(power(Final_Value/Initial_Value, (1/3))-1,2) as AGR                                  # AGR=-0.16
+	from cte
+    ) as subquery
+
++------------------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query:-2] Foreign Projected value for 2025
+
+with cte as (
+select district, sum(case when year=2016 then visitors else 0 end) as Initial_Value,
+		 sum(case when year=2019 then visitors else 0 end) as Final_Value
+from telangana_project.modify_foreign_visitors
+where district="hyderabad" 
+)
+select *, round(final_value*power((1+AGR),6),0) as projected_foreign_2025
+from (
+	select *, round(power(Final_Value/Initial_Value, (1/3))-1,2) as AGR                                   # AGR= 0.25 
+	from cte
+    ) as subquery
+
+
+*************************************************[ Question-8 ]************************************************************************
+
+/* [Question-8]:Estimated the projected revenue for Hyderabad in 2025 based on average spend per tourist (approximate data)
+
+		Tourist  |  Average Revenue 
+		Foreign	 |  Rs. 5600.00
+		Domestic |  Rs. 1200.00     											    */
+
++-------------------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-1] For Domestic Estimation
+
+with cte as (
+select district, sum(case when year=2016 then visitors else 0 end) as Initial_Value,
+	         sum(case when year=2019 then visitors else 0 end) as Final_Value
+from telangana_project.modify_domestic_visitors
+where district="hyderabad" 
+)
+select *, round(Final_Value*power((1+AGR),6),0)  as  projected_dom_2025,
+          round(Final_Value*power((1+AGR),6),0)*1200  as  Projected_dom_revenue
+from (
+	select *, round(power(Final_Value/Initial_Value, (1/3))-1,2) as AGR                                # AGR=-0.16
+	from cte
+    ) as subquery
+
++-----------------------------------------------------------------------------------------------------------------------------------+
+
+-- [Query-2] For Foreign Estimation
+
+with cte as (
+select district, sum(case when year=2016 then visitors else 0 end) as Initial_Value,
+		 sum(case when year=2019 then visitors else 0 end) as Final_Value
+from telangana_project.modify_foreign_visitors
+where district="hyderabad" 
+)
+select *, round(Final_Value*power((1+AGR),6),0) as projected_dom_2025,
+	  round(Final_Value*power((1+AGR),6),0)*5600 as Projected_foreign_revenue
+from (
+	select *, round(power(Final_Value/Initial_Value, (1/3))-1,2) as AGR                                    # AGR=0.25
+	from cte
+    ) as subquery
+
+
+**************************************************[ Thank You]************************************************************************
+
+
+
+
+   
+   
+   
+	
+		
+
+
+
+	 
